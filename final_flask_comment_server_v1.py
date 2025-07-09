@@ -31,7 +31,7 @@ def get_comment():
 
         trend = "不明"
         if len(monthly_values) >= 2:
-            trend = "上升" if monthly_values[-1] > monthly_values[-2] else "下降" if monthly_values[-1] < monthly_values[-2] else "穩定"
+            trend = "増加" if monthly_values[-1] > monthly_values[-2] else "減少" if monthly_values[-1] < monthly_values[-2] else "安定"
 
         genre_summary = df.groupby('genre')['cost'].sum().sort_values(ascending=False)
         genre_total = genre_summary.sum()
@@ -40,7 +40,7 @@ def get_comment():
         genre_percent.index = genre_percent.index.astype(str)
 
         top_genres = "\n".join([
-            f"- {genre}: ¥{int(genre_summary[genre])}（佔總支出的{genre_percent[genre]}）"
+            f"- {genre}: ¥{int(genre_summary[genre])}（全体の{genre_percent[genre]}）"
             for genre in genre_summary.head(5).index
         ])
 
@@ -49,24 +49,24 @@ def get_comment():
         max_value = int(daily_total.max())
 
         prompt = f"""
-你是一位家庭收支顧問。請根據以下支出分析，以自然流暢的繁體中文給出評論與建議：
+あなたは家庭の支出アドバイザーです。以下の支出分析に基づいて、自然で流暢な**日本語**でコメントとアドバイスを提供してください。
 
-【支出概況】
-- 總支出：¥{total_spending}
-- 平均每日支出：¥{avg_spending}
-- 每月支出趨勢：{" → ".join([f"{m} ¥{v}" for m, v in zip(monthly_labels, monthly_values)])}（趨勢：{trend}）
+【支出概要】
+- 総支出：¥{total_spending}
+- 1日あたりの平均支出：¥{avg_spending}
+- 月ごとの支出傾向：{" → ".join([f"{m} ¥{v}" for m, v in zip(monthly_labels, monthly_values)])}（傾向：{trend}）
 
-【各類別支出】
+【ジャンル別支出】
 {top_genres}
 
-【特殊支出日】
-- 支出最高日：{max_day}（¥{max_value}）
+【特に支出が多かった日】
+- 支出が最も多かった日：{max_day}（¥{max_value}）
 """
 
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": "你是家庭收支顧問，請使用繁體中文回答使用者。"},
+                {"role": "system", "content": "あなたは家庭の支出アドバイザーです。日本語で回答してください。"},
                 {"role": "user", "content": prompt}
             ],
             max_tokens=1000
