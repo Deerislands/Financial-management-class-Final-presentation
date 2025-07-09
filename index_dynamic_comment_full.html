@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="utf-8"/>
+  <title>📊 CSV支出分析圖表</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      margin: 50px;
+      background: #f5f5f5;
+    }
+    input, button {
+      margin: 10px;
+    }
+    canvas {
+      max-width: 600px;
+      margin: auto;
+    }
+    #commentBox {
+      margin-top: 40px;
+      padding: 20px;
+      background: #fff;
+      border-radius: 10px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+      white-space: pre-line;
+    }
+  </style>
+</head>
+<body>
+  <h1>📊 從CSV檔案生成支出分析圖表</h1>
+  
+  <p>請上傳包含以下欄位的CSV檔案：day, time, name, cost, genre</p>
+  <input accept=".csv" id="csvFile" type="file"/>
+  <br/>
+  <!-- コメントの下などに追加可能 -->
+  <div class="section">
+    <a href="makedata.html">
+      <button>📄 データ作成画面へ</button>
+    </a>
+  </div>
+
+  <button id="generateBtn">📈 生成圖表</button>
+  <button id="generateCommentBtn">💬 生成 ChatGPT 分析評論</button>
+
+  <div class="section">
+    <h2>🍰 各類支出圓餅圖（元）</h2>
+    <canvas id="pieChart" width="400" height="400"></canvas>
+  </div>
+
+  <div class="section">
+    <h2>📅 每日平均支出金額</h2>
+    <p id="avgCost">-</p>
+  </div>
+
+  <div class="section">
+    <h2>🏆 支出類別排行榜</h2>
+    <ul id="rankingList"></ul>
+  </div>
+
+  <div class="section">
+    <h2>📈 每月支出趨勢</h2>
+    <canvas id="lineChart" width="600" height="400"></canvas>
+  </div>
+
+  <div id="commentBox">💬 尚未生成評論</div>
+
+  <script>
+    let csvData = "";
+
+    document.getElementById('csvFile').addEventListener('change', function (e) {
+      const file = e.target.files[0];
+      if (!file) return alert("請選擇CSV檔案");
+
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        csvData = event.target.result.trim();
+      };
+      reader.readAsText(file, 'UTF-8');
+    });
+
+    document.getElementById('generateBtn').addEventListener('click', function () {
+      if (!csvData) return alert("請先上傳CSV檔案");
+
+      const lines = csvData.split('\n');
+      const headers = lines[0].split(',');
+
+      const genreIndex = headers.indexOf('genre');
+      const costIndex = headers.indexOf('cost');
+      const dayIndex = headers.indexOf('day');
+      if (genreIndex === -1 || costIndex === -1 || dayIndex === -1) {
+        return alert("CSV檔案需包含 'day', 'genre', 'cost' 欄位");
+      }
+
+      const dataMap = {};
+      const dayTotal = {};
+      const genreTotal = {};
+      const monthTotal = {};
+
+      for (let i = 1; i < lines.length; i++) {
+        const row = lines[i].split(',');
+        const genre = row[genreIndex];
+        const cost = parseFloat(row[costIndex]);
+        const day = row[dayIndex];
+        const month = day?.slice(0, 7);
+        if (!isNaN(cost) && genre && day) {
+          dataMap[genre] = (dataMap[genre] || 0) + cost;
+          genreTotal[genre] = (genreTotal[genre] || 0) + cost;
+          dayTotal[day] = (dayTotal[day] || 0) + cost;
+          monthTotal[month] = (monthTotal[month] || 0) + cost;
+        }
+      }
+
+      // 圓餅圖
+      const sortedEntries = Object.entries(dataMap).sort((a, b) => b[1] - a[1]);
+      const labels = sortedEntries.map(entry => entry[0]);
+      const values = sortedEntries.map(entry => entry[1]);
+      const ctx = document.getElementById('pieChart').getContext('2d');
+      if (window.pieChart && typeof window.pieChart.destroy === 'function') window.pieChart.destroy();
+      window.pieChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: values,
+            backgroundColor: ['red','blue','green','orange','purple','pink','brown','yellow','gray','cyan']
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'right' },
+            title: { display: true, text: '支出圓餅圖（依金額排序）' }
+          }
+        }
+      });
+
+      // 平均每日支出
+      const totalDays = Object.keys(dayTotal).length;
+      const totalCost = Object.values(dayTotal).reduce((a, b) => a + b, 0);
+      const avg = totalDays > 0 ? (totalCost / totalDays).toFixed(2) : "0";
+      document.getElementById("avgCost").innerText = `平均每日支出：${avg} 元`;
+
+      // 類別支出排行榜
+      const sortedGenre = Object.entries(genreTotal).sort((a, b) => b[1] - a[1]);
+      const rankList = document.getElementById("rankingList");
+      rankList.innerHTML = "";
+      sortedGenre.forEach(([genre, amount], idx) => {
+        const li = document.createElement("li");
+        li.textContent = `${idx + 1}：${genre} - ${Math.round(amount)} 元`;
+        rankList.appendChild(li);
+      });
+
+      // 月別支出折線圖
+      const sortedMonths = Object.keys(monthTotal).sort();
+      const monthValues = sortedMonths.map(m => monthTotal[m]);
+      const lineCtx = document.getElementById("lineChart").getContext("2d");
+      if (window.lineChart && typeof window.lineChart.destroy === 'function') window.lineChart.destroy();
+      window.lineChart = new Chart(lineCtx, {
+        type: 'line',
+        data: {
+          labels: sortedMonths,
+          datasets: [{
+            label: '每月支出（元）',
+            data: monthValues,
+            fill: false,
+            borderColor: 'blue',
+            tension: 0.1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            title: { display: true, text: '每月支出趨勢圖' }
+          }
+        }
+      });
+    });
+
+    document.getElementById('generateCommentBtn').addEventListener('click', function () {
+      if (!csvData) return alert("請先上傳CSV檔案");
+
+      document.getElementById('commentBox').innerText = "正在生成 ChatGPT 分析...";
+
+      fetch('http://localhost:5000/get_comment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ csv: csvData })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.comment) {
+          document.getElementById('commentBox').innerText = "💬 ChatGPT 分析結果：\n" + data.comment;
+        } else {
+          document.getElementById('commentBox').innerText = "⚠️ 生成失敗，請稍後再試。";
+        }
+      })
+      .catch(err => {
+        document.getElementById('commentBox').innerText = "⚠️ 錯誤：" + err;
+      });
+    });
+  </script>
+</body>
+</html>

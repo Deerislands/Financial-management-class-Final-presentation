@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>CSV資料建立工具</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      margin: 32px;
+    }
+    form {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-evenly;
+    }
+    form p {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+    input {
+      font-size: 16px;
+      padding: 4px;
+    }
+    button {
+      background: #444;
+      color: #fff;
+      font-size: 16px;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      margin-right: 8px;
+      cursor: pointer;
+    }
+    .results {
+      margin-top: 16px;
+    }
+    .results table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid #333;
+      margin-top: 16px;
+    }
+    th,
+    td {
+      text-align: center;
+      padding: 4px;
+      border: 1px solid #333;
+    }
+  </style>
+</head>
+<body>
+  <h1>📝 資料輸入與CSV匯出</h1>
+
+  <form class="form">
+    <p><label>日期：<input type="date" name="day" required /></label></p>
+    <p><label>時間：<input type="time" name="time" required /></label></p>
+    <p><label>名稱：<input type="text" name="name" id="name" required /></label></p>
+    <p><label>金額：<input type="number" name="cost" required /></label></p>
+
+    <p>
+    <label>類別：
+      <select name="genre" required>
+        <option value="">請選擇</option>
+        <option>餐飲</option>
+        <option>日用品</option>
+        <option>交通</option>
+        <option>水電瓦斯</option>
+        <option>通訊費</option>
+        <option>住宅</option>
+        <option>服飾</option>
+        <option>汽車</option>
+        <option>休閒娛樂</option>
+        <option>美容</option>
+        <option>交際</option>
+        <option>書籍</option>
+        <option>保險</option>
+        <option>稅金</option>
+        <option>醫療費</option>
+        <option>教育</option>
+        <option>手續費</option>
+        <option>訂閱服務</option>
+        <option>咖啡</option>
+        <option>旅遊</option>
+        <option>計程車</option>
+        <option>轉帳手續費</option>
+      </select>
+    </label>
+    </p>
+
+    <p><button type="submit">新增</button></p>
+  </form>
+
+  <div class="results">
+    <button class="exportBtn">匯出CSV</button>
+    <button class="editSaveBtn">儲存編輯</button>
+    <table>
+      <thead>
+        <tr>
+          <th>日期</th>
+          <th>時間</th>
+          <th>名稱</th>
+          <th>金額</th>
+          <th>類別</th>
+        </tr>
+      </thead>
+      <tbody class="tbody">
+        <!-- 資料會自動新增在這裡 -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const form = document.querySelector(".form");
+    const exportBtn = document.querySelector(".exportBtn");
+    const editSaveBtn = document.querySelector(".editSaveBtn");
+    const tbody = document.querySelector(".tbody");
+
+    const APP = {
+      data: [],
+      init() {
+        APP.addListeners();
+      },
+      addListeners() {
+        form.addEventListener("submit", APP.saveData);
+        exportBtn.addEventListener("click", APP.exportData);
+        tbody.addEventListener("dblclick", APP.editCell);
+      },
+      saveData(e) {
+        e.preventDefault();
+        const formData = new FormData(form);
+        APP.cacheData(formData);
+        APP.buildRow(formData);
+        form.reset();
+        document.querySelector("#name").focus();
+      },
+      cacheData(formData) {
+        APP.data.push(Array.from(formData.values()));
+      },
+      buildRow(formData) {
+        const tr = document.createElement("tr");
+        tr.setAttribute("data-row", document.querySelectorAll("tbody tr").length);
+        let col = 0;
+        for (let entry of formData.entries()) {
+          tr.innerHTML += `<td data-col="${col}" data-name="${entry[0]}">${entry[1]}</td>`;
+          col++;
+        }
+        tbody.append(tr);
+      },
+      exportData() {
+        const headers = ["day", "time", "name", "cost", "genre"];
+        const csvRows = [headers];
+        APP.data.forEach((row) => {
+          csvRows.push(row);
+        });
+        const csvString = csvRows.map(row =>
+          row.map(col => col).join(",")
+        ).join("\n");
+        const fileName = `資料_${Date.now()}.csv`;
+        const file = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(file);
+        a.download = fileName;
+        a.click();
+      },
+      editCell(e) {
+        let cell = e.target.closest("td");
+        if (cell) {
+          let row = +cell.parentElement.getAttribute("data-row");
+          let col = +cell.getAttribute("data-col");
+          cell.contentEditable = true;
+          cell.focus();
+          editSaveBtn.addEventListener("click", () => {
+            APP.data[row][col] = cell.textContent;
+            console.table(APP.data);
+          });
+        }
+      }
+    };
+
+    document.addEventListener("DOMContentLoaded", APP.init);
+  </script>
+</body>
+</html>
