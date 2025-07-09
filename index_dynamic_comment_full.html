@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="ja">
 <head>
   <meta charset="utf-8"/>
-  <title>📊 CSV支出分析圖表</title>
+  <title>📊 CSV支出分析チャート</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
@@ -32,49 +32,49 @@
   </style>
 </head>
 <body>
-  <h1>📊 從CSV檔案生成支出分析圖表</h1>
+  <h1>📊 CSVファイルから支出分析チャートを生成</h1>
   
-  <p>請上傳包含以下欄位的CSV檔案：day, time, name, cost, genre</p>
+  <p>以下の列を含むCSVファイルをアップロードしてください：day, time, name, cost, genre</p>
   <input accept=".csv" id="csvFile" type="file"/>
   <br/>
-  <!-- コメントの下などに追加可能 -->
+
   <div class="section">
     <a href="makedata.html">
       <button>📄 データ作成画面へ</button>
     </a>
   </div>
 
-  <button id="generateBtn">📈 生成圖表</button>
-  <button id="generateCommentBtn">💬 生成 ChatGPT 分析評論</button>
+  <button id="generateBtn">📈 チャートを生成</button>
+  <button id="generateCommentBtn">💬 ChatGPT 分析を生成</button>
 
   <div class="section">
-    <h2>🍰 各類支出圓餅圖（元）</h2>
+    <h2>🍰 支出カテゴリ別円グラフ（円）</h2>
     <canvas id="pieChart" width="400" height="400"></canvas>
   </div>
 
   <div class="section">
-    <h2>📅 每日平均支出金額</h2>
+    <h2>📅 1日あたりの平均支出金額</h2>
     <p id="avgCost">-</p>
   </div>
 
   <div class="section">
-    <h2>🏆 支出類別排行榜</h2>
+    <h2>🏆 支出カテゴリランキング</h2>
     <ul id="rankingList"></ul>
   </div>
 
   <div class="section">
-    <h2>📈 每月支出趨勢</h2>
+    <h2>📈 月別支出の推移</h2>
     <canvas id="lineChart" width="600" height="400"></canvas>
   </div>
 
-  <div id="commentBox">💬 尚未生成評論</div>
+  <div id="commentBox">💬 まだコメントは生成されていません</div>
 
   <script>
     let csvData = "";
 
     document.getElementById('csvFile').addEventListener('change', function (e) {
       const file = e.target.files[0];
-      if (!file) return alert("請選擇CSV檔案");
+      if (!file) return alert("CSVファイルを選択してください");
 
       const reader = new FileReader();
       reader.onload = function (event) {
@@ -84,7 +84,7 @@
     });
 
     document.getElementById('generateBtn').addEventListener('click', function () {
-      if (!csvData) return alert("請先上傳CSV檔案");
+      if (!csvData) return alert("まずCSVファイルをアップロードしてください");
 
       const lines = csvData.split('\n');
       const headers = lines[0].split(',');
@@ -93,7 +93,7 @@
       const costIndex = headers.indexOf('cost');
       const dayIndex = headers.indexOf('day');
       if (genreIndex === -1 || costIndex === -1 || dayIndex === -1) {
-        return alert("CSV檔案需包含 'day', 'genre', 'cost' 欄位");
+        return alert("CSVファイルには 'day', 'genre', 'cost' の列が必要です");
       }
 
       const dataMap = {};
@@ -115,7 +115,7 @@
         }
       }
 
-      // 圓餅圖
+      // 円グラフ
       const sortedEntries = Object.entries(dataMap).sort((a, b) => b[1] - a[1]);
       const labels = sortedEntries.map(entry => entry[0]);
       const values = sortedEntries.map(entry => entry[1]);
@@ -134,28 +134,28 @@
           responsive: true,
           plugins: {
             legend: { position: 'right' },
-            title: { display: true, text: '支出圓餅圖（依金額排序）' }
+            title: { display: true, text: '支出円グラフ（金額順）' }
           }
         }
       });
 
-      // 平均每日支出
+      // 平均支出
       const totalDays = Object.keys(dayTotal).length;
       const totalCost = Object.values(dayTotal).reduce((a, b) => a + b, 0);
       const avg = totalDays > 0 ? (totalCost / totalDays).toFixed(2) : "0";
-      document.getElementById("avgCost").innerText = `平均每日支出：${avg} 元`;
+      document.getElementById("avgCost").innerText = `1日あたりの平均支出：${avg} 円`;
 
-      // 類別支出排行榜
+      // ランキング
       const sortedGenre = Object.entries(genreTotal).sort((a, b) => b[1] - a[1]);
       const rankList = document.getElementById("rankingList");
       rankList.innerHTML = "";
       sortedGenre.forEach(([genre, amount], idx) => {
         const li = document.createElement("li");
-        li.textContent = `${idx + 1}：${genre} - ${Math.round(amount)} 元`;
+        li.textContent = `${idx + 1}：${genre} - ${Math.round(amount)} 円`;
         rankList.appendChild(li);
       });
 
-      // 月別支出折線圖
+      // 折れ線グラフ
       const sortedMonths = Object.keys(monthTotal).sort();
       const monthValues = sortedMonths.map(m => monthTotal[m]);
       const lineCtx = document.getElementById("lineChart").getContext("2d");
@@ -165,7 +165,7 @@
         data: {
           labels: sortedMonths,
           datasets: [{
-            label: '每月支出（元）',
+            label: '月別支出（円）',
             data: monthValues,
             fill: false,
             borderColor: 'blue',
@@ -175,16 +175,16 @@
         options: {
           responsive: true,
           plugins: {
-            title: { display: true, text: '每月支出趨勢圖' }
+            title: { display: true, text: '月別支出の推移グラフ' }
           }
         }
       });
     });
 
     document.getElementById('generateCommentBtn').addEventListener('click', function () {
-      if (!csvData) return alert("請先上傳CSV檔案");
+      if (!csvData) return alert("まずCSVファイルをアップロードしてください");
 
-      document.getElementById('commentBox').innerText = "正在生成 ChatGPT 分析...";
+      document.getElementById('commentBox').innerText = "ChatGPTによる分析を生成中...";
 
       fetch('http://localhost:5000/get_comment', {
         method: 'POST',
@@ -194,13 +194,13 @@
       .then(res => res.json())
       .then(data => {
         if (data.comment) {
-          document.getElementById('commentBox').innerText = "💬 ChatGPT 分析結果：\n" + data.comment;
+          document.getElementById('commentBox').innerText = "💬 ChatGPTによる分析結果：\n" + data.comment;
         } else {
-          document.getElementById('commentBox').innerText = "⚠️ 生成失敗，請稍後再試。";
+          document.getElementById('commentBox').innerText = "⚠️ 生成に失敗しました。しばらくしてから再試行してください。";
         }
       })
       .catch(err => {
-        document.getElementById('commentBox').innerText = "⚠️ 錯誤：" + err;
+        document.getElementById('commentBox').innerText = "⚠️ エラー：" + err;
       });
     });
   </script>
