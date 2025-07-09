@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>CSV資料建立工具</title>
+  <title>CSVデータ作成ツール</title>
   <style>
     * {
       margin: 0;
@@ -54,62 +54,62 @@
   </style>
 </head>
 <body>
-  <h1>📝 資料輸入與CSV匯出</h1>
+  <h1>📝 データ入力とCSV出力</h1>
 
   <form class="form">
-    <p><label>日期：<input type="date" name="day" required /></label></p>
+    <p><label>日付：<input type="date" name="day" required /></label></p>
     <p><label>時間：<input type="time" name="time" required /></label></p>
-    <p><label>名稱：<input type="text" name="name" id="name" required /></label></p>
+    <p><label>名称：<input type="text" name="name" id="name" required /></label></p>
     <p><label>金額：<input type="number" name="cost" required /></label></p>
 
     <p>
-    <label>類別：
+    <label>カテゴリ：
       <select name="genre" required>
-        <option value="">請選擇</option>
-        <option>餐飲</option>
+        <option value="">選択してください</option>
+        <option>飲食</option>
         <option>日用品</option>
         <option>交通</option>
-        <option>水電瓦斯</option>
-        <option>通訊費</option>
+        <option>水道・電気・ガス</option>
+        <option>通信費</option>
         <option>住宅</option>
-        <option>服飾</option>
-        <option>汽車</option>
-        <option>休閒娛樂</option>
+        <option>衣類</option>
+        <option>車両</option>
+        <option>娯楽</option>
         <option>美容</option>
         <option>交際</option>
         <option>書籍</option>
-        <option>保險</option>
-        <option>稅金</option>
-        <option>醫療費</option>
+        <option>保険</option>
+        <option>税金</option>
+        <option>医療費</option>
         <option>教育</option>
-        <option>手續費</option>
-        <option>訂閱服務</option>
-        <option>咖啡</option>
-        <option>旅遊</option>
-        <option>計程車</option>
-        <option>轉帳手續費</option>
+        <option>手数料</option>
+        <option>サブスクリプション</option>
+        <option>カフェ</option>
+        <option>旅行</option>
+        <option>タクシー</option>
+        <option>振込手数料</option>
       </select>
     </label>
     </p>
 
-    <p><button type="submit">新增</button></p>
+    <p><button type="submit">追加</button></p>
   </form>
 
   <div class="results">
-    <button class="exportBtn">匯出CSV</button>
-    <button class="editSaveBtn">儲存編輯</button>
+    <button class="exportBtn">CSV出力</button>
+    <button class="editSaveBtn">編集を保存</button>
     <table>
       <thead>
         <tr>
-          <th>日期</th>
+          <th>日付</th>
           <th>時間</th>
-          <th>名稱</th>
+          <th>名称</th>
           <th>金額</th>
-          <th>類別</th>
+          <th>カテゴリ</th>
         </tr>
       </thead>
       <tbody class="tbody">
-        <!-- 資料會自動新增在這裡 -->
+        <!-- データがここに追加されます -->
       </tbody>
     </table>
   </div>
@@ -160,7 +160,7 @@
         const csvString = csvRows.map(row =>
           row.map(col => col).join(",")
         ).join("\n");
-        const fileName = `資料_${Date.now()}.csv`;
+        const fileName = `データ_${Date.now()}.csv`;
         const file = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
         const a = document.createElement("a");
         a.href = URL.createObjectURL(file);
